@@ -129,6 +129,8 @@ def _scene_key(ws: EpisodeWorkspace, s: Scene, w: int, h: int, fps: int, vertica
                 assets.append(sha256_file(ws.dir / rel))
     if s.visual.background and not s.visual.background.startswith("#") and (ws.dir / s.visual.background).exists():
         assets.append(sha256_file(ws.dir / s.visual.background))
+    if s.visual.video and (ws.dir / s.visual.video["path"]).exists():
+        assets.append(sha256_file(ws.dir / s.visual.video["path"]))
     return cache_key("scene_render", {"scene": s.model_dump(mode="json", exclude={"status", "cost_usd"}),
                                       "assets": assets, "size": [w, h, fps], "vertical": vertical,
                                       "v": COMPOSITOR_VERSION})

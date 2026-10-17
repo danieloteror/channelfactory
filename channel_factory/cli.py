@@ -176,16 +176,27 @@ def channel_list() -> None:
 
 
 @app.command("analyze-channel")
-def analyze_channel(url: str, channel: str = typer.Option(..., "--channel"), catalog_limit: int = 500,
-                    deep: int = 10, download_media: bool = typer.Option(False, help="Solo si el uso está permitido.")) -> None:
-    """Catálogo, métricas públicas, cohortes, muestra profunda y análisis audiovisual."""
+def analyze_channel(url: str, channel: Optional[str] = typer.Option(None, "--channel", help="Guardar en el canal propio."),
+                    catalog_limit: int = 500, deep: int = 10,
+                    enrich: int = typer.Option(80, help="Videos con metadatos completos si no hay API key."),
+                    download_media: bool = typer.Option(False, help="Solo si el uso está permitido.")) -> None:
+    """Catálogo, métricas públicas, cohortes, qué le funcionó, muestra profunda y análisis audiovisual."""
     from .reference_research.analyze import analyze_channel as run
 
     s, db = _ctx()
-    slug = re.sub(r"[^a-z0-9]+", "_", url.lower().split("@")[-1].split("/")[-1])[:40]
-    out = s.channel_dir(channel) / "reference" / slug
-    res = run(url, out, catalog_limit=catalog_limit, deep_sample=deep, download_media=download_media, db=db)
-    _out({"out": str(out), "videos": len(res["videos"]), "limitations": res["access_limitations"]})
+    slug = re.sub(r"[^a-z0-9]+", "_", url.lower().split("?")[0].rstrip("/").split("@")[-1].split("/")[0])[:40]
+    base = s.channel_dir(channel) / "reference" if channel else s.state_dir / "reference"
+    out = base / slug
+    from .reference_research.youtube_api import ApiBlocked
+    from .reference_research.ytdlp import YtDlpBlocked
+
+    try:
+        res = run(url, out, catalog_limit=catalog_limit, deep_sample=deep, download_media=download_media,
+                  enrich=enrich, db=db)
+    except (ApiBlocked, YtDlpBlocked) as e:
+        _blocked(str(e))
+    _out({"out": str(out), "report": str(out / "reference_report.md"), "videos": len(res["videos"]),
+          "what_worked_formats": list(res["what_worked"]["by_format"]), "limitations": res["access_limitations"]})
 
 
 @app.command("analyze-video")

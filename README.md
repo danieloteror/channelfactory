@@ -17,6 +17,13 @@ publish. Durable SQLite state: jobs survive restarts and don't need an open chat
 >
 > This repository holds **only the tool**. Channels are created locally with `channel-factory channel init`.
 
+> **Agente de Claude Code / Claude Code agent:** abre este repo con Claude Code y pega el enlace de un
+> canal de YouTube (o usa `/analizar-canal <url>`): analiza qué le funcionó más, por qué (hipótesis con
+> evidencia y confianza) y cómo está producido, y entrega `format_bible.md` y propuestas originales. La
+> especificación completa está en [`MASTER_PROMPT.md`](MASTER_PROMPT.md) y las instrucciones del agente en
+> [`CLAUDE.md`](CLAUDE.md). / Open the repo in Claude Code and paste a YouTube channel link (or run
+> `/analizar-canal <url>`).
+
 > **Publicación / Publishing:** la integración con Metricool está implementada pero **desactivada**
 > (`publishing.enabled: false`). Se recomienda para automatizar; cómo activarla en
 > [docs/metricool.md](docs/metricool.md) (ES/EN). / Metricool integration is implemented but **disabled**;
@@ -25,6 +32,20 @@ publish. Durable SQLite state: jobs survive restarts and don't need an open chat
 ---
 
 ## Español
+
+### El agente
+| Pieza | Qué es |
+|---|---|
+| [`MASTER_PROMPT.md`](MASTER_PROMPT.md) | Especificación completa del producto (tal cual, fuente de verdad) |
+| [`CLAUDE.md`](CLAUDE.md) | Cómo opera el agente: flujos, reglas y mapa del código |
+| `.claude/skills/analizar-canal` | `/analizar-canal <url> [canal]`: qué le funcionó, por qué, producción, format bible y propuestas |
+| `.claude/skills/producir-episodio` | `/producir-episodio <canal> <tema>`: guion → visual → render → revisión |
+| `.claude/skills/producir-mes` | `/producir-mes <canal> <YYYY-MM>`: lote mensual con cola durable |
+| `.claude/agents/` | Subagentes con contrato: `investigador-canales`, `guionista`, `director-visual`, `revisor`, `editor-clips` |
+| [`docs/styles.md`](docs/styles.md) | 5 skills de estilo visual (HyperFrames, onetake, Collage B-roll, Claude Animation, Lemo-Opuscar) |
+
+El análisis funciona con `YOUTUBE_API_KEY` (catálogo completo con fechas) o, sin ella, con yt-dlp
+(pestañas /videos, /shorts y /streams del canal + metadatos de los videos más vistos y recientes).
 
 ### Instalación
 Requisitos: Python 3.11+, FFmpeg/ffprobe, fontconfig. Funciona en Mac Apple Silicon o Linux sin GPU.
@@ -41,7 +62,7 @@ channel-factory doctor --smoke            # diagnóstico + episodio sintético d
 ### Uso
 ```bash
 channel-factory channel init <id> --name "<Nombre>" --niche <nicho>   # perfil independiente por canal
-channel-factory analyze-channel <url> --channel <id> [--download-media]
+channel-factory analyze-channel <url> [--channel <id>] [--download-media]
 channel-factory analyze-video <url-o-archivo> [--channel <id>]
 channel-factory voices audition --channel <id>      # 5–8 muestras + verificación ASR + galería HTML
 channel-factory voices select <voz> --channel <id>  # fija la voz (o --provisional para pilotos)
@@ -72,7 +93,7 @@ escribe el agente en sesión o un LLM con presupuesto; las duraciones salen del 
 | `providers/` | Interfaces de TTS/imagen/LLM, Kokoro, registro de herramientas propias |
 
 ### Qué funciona hoy y qué está bloqueado
-Funciona y está probado (37 tests + prueba de punta a punta): cola durable con recuperación,
+Funciona y está probado (41 tests + prueba de punta a punta): cola durable con recuperación,
 idempotencia y presupuesto; audiciones y narración con Kokoro; verificación ASR; compositor
 16:9 y 9:16 con recomposición; mezcla a −14 LUFS / −1,5 dBTP; subtítulos SRT/VTT; QA técnica;
 análisis audiovisual local; contrato y validación de Clip Master con un doble de prueba.
@@ -81,7 +102,8 @@ Pendiente de datos o accesos (lo muestra `channel-factory doctor`):
 - **Clip Master:** ruta/repositorio y forma de invocarlo (`clip_master.path` + `command`).
 - **Análisis de canales:** `YOUTUBE_API_KEY`; yt-dlp necesita acceso a youtube.com.
 - **Imágenes generativas:** no hay proveedor configurado; registra el tuyo en `providers/user_tools.yaml`
-  (o API con presupuesto). El compositor usa las imágenes/capas que aporte el canal.
+  (o API con presupuesto). El compositor usa las imágenes/capas que aporte el canal o un MP4 de una skill
+  de estilo como fondo de escena ([docs/styles.md](docs/styles.md)); esas skills no se instalan automáticamente.
 - **Metricool:** desactivado a propósito (ver arriba).
 
 Más: [operación y despliegue](docs/operations.md) · [contrato Clip Master](docs/clip_master_contract.md) ·
@@ -100,6 +122,13 @@ pip install silero-vad --no-deps
 cp .env.example .env
 channel-factory setup && channel-factory models fetch-asr && channel-factory doctor --smoke
 ```
+
+### The agent
+Open the repo in Claude Code and paste a YouTube channel link, or run `/analizar-canal <url>`. It reports
+what worked best for the channel (formats, topics, titles, duration, thumbnails, hooks — with numbers),
+why (hypotheses with evidence and confidence), how it is produced, a `format_bible.md` and original
+proposals. Full spec: [`MASTER_PROMPT.md`](MASTER_PROMPT.md); agent rules: [`CLAUDE.md`](CLAUDE.md);
+visual style skills: [`docs/styles.md`](docs/styles.md).
 
 ### Use
 Create a channel profile (`channel init`), analyze references (`analyze-channel`, `analyze-video`),

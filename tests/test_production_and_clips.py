@@ -125,3 +125,19 @@ def test_vertical_recomposes_when_roi_cuts_character(tmp_path) -> None:  # noqa:
     layers = _build_layers(scene2, ep, 1.0, None)
     rect = camera_rect(scene2.visual.camera, 0, 1.0, (3840, 2160), 270 / 480, tuple(sc["visual"]["vertical_roi"]))
     assert clipped_essentials(layers, (3840, 2160), rect) == ["hero"]
+
+
+def test_scene_with_style_video_background(tmp_path) -> None:  # noqa: ANN001
+    """Un MP4 de una skill de estilo sirve de fondo; cámara y capas siguen funcionando encima."""
+    from .conftest import make_video
+
+    ep = build_episode(tmp_path)
+    make_video(ep / "assets" / "style_clip.mp4", 640, 360, 1.0, audio=False)
+    sc = yaml.safe_load((ep / "episode.yaml").read_text())["scenes"][0]
+    sc.update(duration_s=1.5, transition_in="cut")
+    sc["visual"]["video"] = {"path": "assets/style_clip.mp4", "loop": False, "style": "hyperframes"}
+    sc["visual"]["overlays"] = []
+    rep = render_scene(Scene.model_validate(sc), ep, tmp_path / "v.mp4", width=320, height=180, fps=10)
+    assert rep.frames == 20  # 0,15 entrada + 1,5 narración + 0,35 salida
+    info = ffprobe(tmp_path / "v.mp4")
+    assert float(info["format"]["duration"]) >= 1.9

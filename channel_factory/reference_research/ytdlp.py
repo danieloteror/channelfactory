@@ -42,9 +42,14 @@ def metadata(url: str) -> dict:
     return json.loads(_run(["-J", "--skip-download", url]).stdout)
 
 
-def flat_playlist(url: str, limit: int = 500) -> list[dict]:
+def playlist_json(url: str, limit: int = 500) -> dict:
+    """JSON plano de una pestaña/lista (título, duración y visitas por entrada; sin fecha)."""
     r = _run(["--flat-playlist", "-J", "--playlist-end", str(limit), url])
-    return json.loads(r.stdout).get("entries", [])
+    return json.loads(r.stdout)
+
+
+def flat_playlist(url: str, limit: int = 500) -> list[dict]:
+    return playlist_json(url, limit).get("entries", [])
 
 
 def subtitles(url: str, out_dir: Path, langs: str = "es.*,en.*") -> list[Path]:

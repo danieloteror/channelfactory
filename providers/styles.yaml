@@ -1,0 +1,80 @@
+# Skills de Claude para estilos visuales (inspeccionadas 2026-10-17, no instaladas ni ejecutadas aquí).
+# Cada una produce un MP4 que el compositor usa como fondo de escena (`visual.video`) o un plano
+# completo; la narración, el ritmo y la QA siguen siendo de Channel Factory.
+# commercial_use: si el canal se monetiza, solo `true` es utilizable sin licencia adicional.
+schema_version: "1.0"
+styles:
+  - id: hyperframes
+    name: HyperFrames
+    source: https://github.com/heygen-com/hyperframes
+    commit: "09c0307"
+    license: Apache-2.0
+    commercial_use: true
+    look: "Motion graphics HTML/CSS/GSAP: tipografía cinética, iconos, gráficos, transiciones, tarjetas."
+    best_for: [títulos, capítulos, datos animados, listas, intro/outro, overlays complejos]
+    install: "claude plugin install hyperframes@hyperframes   # o: npx skills add heygen-com/hyperframes"
+    requires: [node>=22, ffmpeg, chrome_o_chromium]
+    paid_api: false
+    output: "MP4 1920x1080 30 fps (render determinista)"
+    status: optional_not_tested
+
+  - id: onetake
+    name: onetake
+    source: https://github.com/feitangyuan/onetake
+    commit: "4157581"
+    license: PolyForm-Noncommercial-1.0.0
+    commercial_use: false
+    look: "Plano secuencia continuo: cada beat nace del anterior, UI reconstruida en HTML, mano que provoca cada reacción."
+    best_for: [demos de producto/herramienta, aperturas de 10–30 s sin cortes]
+    install: "git clone https://github.com/feitangyuan/onetake ~/.claude/skills/onetake"
+    requires: [python3+playwright, numpy, scipy, Pillow, matplotlib, ffmpeg, node]
+    paid_api: false
+    output: "MP4 hasta 4K60"
+    status: blocked_license
+    notes: "Licencia NO comercial: no usar en un canal monetizado sin licencia comercial del autor."
+
+  - id: collage_broll
+    name: Collage B-roll (gbro-collage-broll)
+    source: https://github.com/pyang5166/gbro-collage-broll
+    commit: "a1a4ee2"
+    license: MIT
+    commercial_use: true
+    look: "B-roll editorial de papel recortado con semitono: metáforas visuales de ~5 s por frase."
+    best_for: [conceptos abstractos, metáforas, transiciones entre bloques]
+    install: "git clone https://github.com/pyang5166/gbro-collage-broll ~/.claude/skills/gbro-collage-broll"
+    requires: [python>=3.10, google-genai>=2.10, ffmpeg]
+    paid_api: true
+    credentials_env: [GEMINI_API_KEY]
+    output: "MP4 ~5 s por plano"
+    status: needs_access
+    notes: "Generación de video facturada por uso (Gemini): pasa por el presupuesto. Su Gate 2 depende del image_gen de Codex; en Claude Code requiere sustituir ese paso. Documentación en chino."
+
+  - id: claude_animation
+    name: Claude Animation (ClaudeAnimationBase)
+    source: https://github.com/JohnHeibel/ClaudeAnimationBase
+    commit: "0ac8bf2"
+    license: MIT
+    commercial_use: true
+    look: "Animación dibujada a mano (p5.js + p5.brush): personaje con emociones, acuarela, storyboard por planos."
+    best_for: [personaje recurrente animado, escenas de reacción, aperturas con personalidad]
+    install: "git clone https://github.com/JohnHeibel/ClaudeAnimationBase && npm install"
+    requires: [node, chrome_o_chromium, ffmpeg]
+    paid_api: false
+    output: "out/video.mp4 (node render.mjs --clip)"
+    status: optional_not_tested
+    notes: "Sin GPU los rellenos de acuarela tardan segundos por fotograma; pedir rellenos más simples en CPU. Es un kit de partida (no SKILL.md): se usa abriendo el repo y siguiendo ANIMATION_GUIDE.md."
+
+  - id: lemo_opuscar
+    name: Lemo-Opuscar
+    source: https://github.com/lemomo-ai/lemo-opuscar
+    commit: "d33bdea"
+    license: MIT
+    commercial_use: true
+    look: "Biblioteca de ~40 estilos de cine hechos en código (pixel art, óleo, acuarela, ukiyo-e, briefing satelital, despiece…)."
+    best_for: [cortinillas, escenas ambientales, cambios de registro, cold opens]
+    install: "claude plugin install lemo-opuscar@lemolab   # ver README del repo para añadir el marketplace"
+    requires: [node>=20, ffmpeg, python>=3.11]
+    paid_api: false
+    output: "MP4 por película/plano"
+    status: optional_not_tested
+    notes: "La skill clona la biblioteca en ~/lemo-opuscar y sigue su AGENTS.md (incluye una ronda de preguntas propia)."

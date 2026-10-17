@@ -81,6 +81,7 @@ class SceneVisual(_M):
     """
 
     background: str | None = None  # ruta de imagen relativa al episodio o color "#rrggbb"
+    video: dict | None = None  # fondo en video (p. ej. salida de una skill de estilo): {path, start_s, loop, style}
     canvas: tuple[int, int] | None = None  # por defecto el tamaño del fondo o 3840x2160
     characters: list[dict] = []
     props: list[dict] = []

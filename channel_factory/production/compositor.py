@@ -235,6 +235,54 @@ def clipped_essentials(layers: list[Layer], canvas: tuple[int, int], rect: tuple
     return bad
 
 
+class VideoSource:
+    """Fotogramas de un MP4 (fondo de escena) al tamaño del lienzo, en flujo secuencial.
+
+    Lectura secuencial eficiente; un salto hacia atrás o adelante reabre FFmpeg con -ss.
+    `loop`: repite el clip; si no, mantiene el último fotograma cuando se acaba.
+    """
+
+    def __init__(self, path: Path, size: tuple[int, int], fps: int, start_s: float = 0.0, loop: bool = True):
+        self.path, self.size, self.fps, self.start, self.loop = Path(path), size, fps, start_s, loop
+        from ..quality.technical import ffprobe
+
+        self.duration = float(ffprobe(self.path)["format"].get("duration", 0)) - start_s
+        self._proc = None
+        self._next_i = None
+        self._last: Image.Image | None = None
+
+    def _open(self, t: float) -> None:
+        self.close()
+        w, h = self.size
+        self._proc = subprocess.Popen(
+            ["ffmpeg", "-loglevel", "error", "-ss", f"{self.start + t:.3f}", "-i", str(self.path), "-an", "-vf",
+             f"fps={self.fps},scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}",
+             "-f", "rawvideo", "-pix_fmt", "rgba", "-"], stdout=subprocess.PIPE)
+        self._next_i = int(round(t * self.fps))
+
+    def frame(self, t: float) -> Image.Image:
+        if self.duration > 0 and t >= self.duration:
+            t = (t % self.duration) if self.loop else max(self.duration - 1 / self.fps, 0)
+        i = int(round(t * self.fps))
+        if self._proc is None or i != self._next_i:
+            self._open(i / self.fps)
+        w, h = self.size
+        buf = self._proc.stdout.read(w * h * 4)
+        if len(buf) < w * h * 4:
+            if self._last is None:
+                raise RuntimeError(f"no se pudo leer el video {self.path}")
+            return self._last
+        self._next_i = i + 1
+        self._last = Image.frombuffer("RGBA", (w, h), buf, "raw", "RGBA", 0, 1)
+        return self._last
+
+    def close(self) -> None:
+        if self._proc is not None:
+            self._proc.kill()
+            self._proc.wait()
+            self._proc = None
+
+
 class SceneRenderer:
     """Prepara una escena una vez y produce cualquier fotograma `frame(t)` (RGBA).
 
@@ -243,13 +291,15 @@ class SceneRenderer:
     en coma flotante) si no: ambos dan movimiento subpíxel sin temblor.
     """
 
-    def __init__(self, scene: Scene, episode_dir: Path, *, width: int, height: int, vertical: bool = False):
+    def __init__(self, scene: Scene, episode_dir: Path, *, width: int, height: int, vertical: bool = False,
+                 fps: int = 30):
         self.scene, self.width, self.height, self.vertical = scene, width, height, vertical
         base = Path(episode_dir)
         self.narration_s = scene.duration_s or 0.0
         self.dur = scene_duration(scene)
         bg = _background(scene, base)
         aspect = width / height
+        vid = scene.visual.video
         vl = scene.visual.vertical_layout or {}
         cam = scene.visual.camera or {}
         zmax = max(cam.get("from", [0, 0, 1.0])[2], cam.get("to", cam.get("from", [0, 0, 1.0]))[2], 1.0)
@@ -287,6 +337,8 @@ class SceneRenderer:
                 text_time(scene, ov["until_text"], self.narration_s) if ov.get("until_text") else self.dur)
         self.overlays = overlays
         self.scale = height / 1080 if not vertical else width / 1080
+        self.video = VideoSource(base / vid["path"], self.canvas, fps,
+                                 float(vid.get("start_s", 0.0)), bool(vid.get("loop", True))) if vid else None
         try:
             import cv2  # noqa: F401
             import numpy as np
@@ -295,21 +347,23 @@ class SceneRenderer:
         except ImportError:
             self._bg_np = None
 
-    def _camera(self, rect: tuple[float, float, float, float]) -> Image.Image:
+    def _camera(self, rect: tuple[float, float, float, float], t: float = 0.0) -> Image.Image:
+        src_img = self.video.frame(t) if self.video is not None else self.bg
         if self._bg_np is not None:
             import cv2
             import numpy as np
 
+            src = np.asarray(src_img) if self.video is not None else self._bg_np
             sx = self.width / (rect[2] - rect[0])
             m = np.float32([[sx, 0, -rect[0] * sx], [0, sx, -rect[1] * sx]])
-            out = cv2.warpAffine(self._bg_np, m, (self.width, self.height), flags=cv2.INTER_LINEAR,
+            out = cv2.warpAffine(src, m, (self.width, self.height), flags=cv2.INTER_LINEAR,
                                  borderMode=cv2.BORDER_REPLICATE)
             return Image.fromarray(out, "RGBA")
-        return self.bg.resize((self.width, self.height), Image.BILINEAR, box=rect)
+        return src_img.resize((self.width, self.height), Image.BILINEAR, box=rect)
 
     def frame(self, t: float, prev: Image.Image | None = None) -> Image.Image:
         rect = camera_rect(self.scene.visual.camera, t, self.dur, self.canvas, self.width / self.height, self.roi)
-        frame = self._camera(rect)
+        frame = self._camera(rect, t)
         sx = self.width / (rect[2] - rect[0])
         for l in self.layers:
             st = _layer_state(l, t)
@@ -351,15 +405,19 @@ class SceneRenderer:
 def last_frame(scene: Scene, episode_dir: Path, *, width: int, height: int, fps: int,
                vertical: bool = False) -> Image.Image:
     """Último fotograma de una escena sin renderizarla entera (para fundidos encadenados en paralelo)."""
-    r = SceneRenderer(scene, episode_dir, width=width, height=height, vertical=vertical)
+    r = SceneRenderer(scene, episode_dir, width=width, height=height, vertical=vertical, fps=fps)
     n = max(1, int(round(r.dur * fps)))
-    return r.frame((n - 1) / fps)
+    try:
+        return r.frame((n - 1) / fps)
+    finally:
+        if r.video is not None:
+            r.video.close()
 
 
 def render_scene(scene: Scene, episode_dir: Path, out_path: Path, *, width: int, height: int, fps: int,
                  prev_scene: Scene | None = None, vertical: bool = False, crf: int = 18,
                  preset: str = "veryfast") -> RenderReport:
-    r = SceneRenderer(scene, episode_dir, width=width, height=height, vertical=vertical)
+    r = SceneRenderer(scene, episode_dir, width=width, height=height, vertical=vertical, fps=fps)
     prev = None
     if prev_scene is not None and scene.transition_in == "crossfade":
         prev = last_frame(prev_scene, episode_dir, width=width, height=height, fps=fps, vertical=vertical)
@@ -379,6 +437,8 @@ def render_scene(scene: Scene, episode_dir: Path, out_path: Path, *, width: int,
     finally:
         ff.stdin.close()
         rc = ff.wait()
+        if r.video is not None:
+            r.video.close()
     if rc != 0:
         raise RuntimeError(f"ffmpeg falló renderizando {scene.scene_id} (código {rc})")
     if last is not None:
