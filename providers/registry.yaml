@@ -1,0 +1,187 @@
+# Registro de herramientas inspeccionadas (2026-10-17). Estado medido en el entorno de desarrollo
+# (Linux x86_64, 4 CPU, sin GPU). En el Mac del propietario puede variar: `channel-factory doctor`.
+# status: operational | alternative | needs_access | optional | pending_test | not_recommended
+schema_version: "1.0"
+inspected_at: "2026-10-17"
+tools:
+  - id: faceless_youtube_agents
+    kind: base_pipeline
+    source: https://github.com/yashaiguy-dev/faceless-youtube-agents
+    commit: "e92c84537996217dd6fff60da9acc87198022b0b"
+    license_code: "MIT (declarada en README; no hay archivo LICENSE)"
+    status: alternative
+    status_reason: >-
+      Base conceptual reutilizada (etapas imágenes→TTS→montaje→miniatura→subida, análisis con yt-dlp).
+      Su código exige Gathos para voz e imagen, guarda estado en JSON por ejecución (sin cola durable),
+      calcula duración por palabras (2,5 pal/s) y monta con zoompan + xfade a 24 fps. Channel Factory
+      sustituye esas piezas por proveedores intercambiables, duración real de audio y cola SQLite.
+    capabilities: [channel_transcripts, slides_pipeline, youtube_upload_oauth]
+    used_by_modules: [reference_research, production]
+    env_notes: "No se copia su código. Gathos queda como proveedor opcional registrable en user_tools.yaml."
+
+  - id: agent_reach
+    kind: research
+    source: https://github.com/Panniantong/Agent-Reach
+    commit: "94f06c1969dfc1834001269d79d3ad0972d9dee6"
+    license_code: MIT
+    status: optional
+    status_reason: >-
+      CLI para que el agente lea YouTube (subtítulos + búsqueda vía yt-dlp), web y otras fuentes, con
+      `agent-reach doctor`. Útil para investigación en sesión en el Mac; Channel Factory usa yt-dlp y
+      la YouTube Data API directamente. Instalar desde el repositorio (no el paquete homónimo de PyPI).
+    capabilities: [youtube_subtitles, youtube_search, web_read]
+    used_by_modules: [reference_research, editorial]
+
+  - id: graphify
+    kind: context
+    source: https://github.com/Graphify-Labs/graphify
+    commit: "86c57be8204673c2a1b9849a3292a7dd3ab373d8"
+    license_code: "Apache-2.0 / MIT (dual)"
+    status: optional
+    status_reason: >-
+      Grafo consultable de código y documentación (`uv tool install graphifyy`, `/graphify .`,
+      `graphify query|path|explain`). Recomendado sobre channel_factory/ y docs/ para que los agentes
+      consulten relaciones entre módulos con pocos tokens. Ignorar la oferta de su servicio en la nube.
+    capabilities: [code_graph]
+    used_by_modules: []
+
+  - id: hyperframes
+    kind: composition
+    source: https://github.com/heygen-com/hyperframes
+    commit: "09c0307c3fd0318a7ea77e6b41df4e5d30a1902b"
+    license_code: Apache-2.0
+    status: pending_test
+    status_reason: >-
+      HTML/CSS/GSAP → MP4 determinista con Chrome headless (CLI @hyperframes/cli 0.8.x, Node 22+,
+      FFmpeg). Candidato para títulos y capas animadas avanzadas. No probado aún: el backend inicial es
+      el compositor Python+FFmpeg (probado). Cargar solo los workflows necesarios
+      (`npx hyperframes skills update`), no los 21 skills.
+    capabilities: [render, motion_graphics]
+    used_by_modules: [production]
+
+  - id: herk_edit_kit
+    kind: editorial_method
+    source: https://github.com/nateherkai/herk-edit-kit
+    commit: "10511e5af86fc47756ea89803b397422e2d89284"
+    license_code: MIT (ver THIRD_PARTY_NOTICES.md y licenses/)
+    status: optional
+    status_reason: >-
+      Kit sobre HyperFrames: `short-form-edit` (hook/payoff, subtítulos precisos, B-roll, revisión de
+      audio, validadores) y `style-library` (tarjetas y tokens, p. ej. estilo explainer). Sus criterios de
+      gancho/payoff y validación de subtítulos inspiran el perfil `original_explainer`; aplicable también
+      a los flujos de fútbol/gameplay de Clip Master. Requiere HyperFrames.
+    capabilities: [short_form_method, card_library]
+    used_by_modules: [clip_master_adapter]
+
+  - id: kokoro_onnx
+    kind: tts
+    source: https://github.com/thewh1teagle/kokoro-onnx
+    version: "0.6.1"
+    license_code: MIT
+    license_models: "Apache-2.0 (hexgrad/Kokoro-82M)"
+    status: operational
+    status_reason: "Probado: 54 voces, RTF ~0,5–1,0 en CPU de 4 núcleos. Modelos desde GitHub releases con checksum."
+    capabilities: [tts]
+    used_by_modules: [production]
+
+  - id: sherpa_onnx_whisper_base_en
+    kind: asr
+    source: https://github.com/k2-fsa/sherpa-onnx
+    version: "1.13.8"
+    license_code: Apache-2.0
+    license_models: "MIT (OpenAI Whisper)"
+    status: operational
+    status_reason: "Probado: verificación ida y vuelta de la narración (WER) y transcripción local sin red."
+    capabilities: [asr]
+    used_by_modules: [quality, reference_research]
+
+  - id: pyscenedetect
+    kind: visual_analysis
+    source: https://www.scenedetect.com/
+    version: "0.7.2"
+    license_code: BSD-3-Clause
+    status: operational
+    status_reason: "Probado (ContentDetector). Alternativa sin instalar: filtro scene de FFmpeg."
+    capabilities: [scene_cuts]
+    used_by_modules: [reference_research]
+
+  - id: opencv_headless
+    kind: visual_analysis
+    source: https://docs.opencv.org/
+    version: "5.0.0.93"
+    license_code: Apache-2.0
+    status: operational
+    status_reason: "Probado: flujo óptico Farneback para distinguir imagen estática editada de animación continua."
+    capabilities: [motion]
+    used_by_modules: [reference_research]
+
+  - id: librosa
+    kind: audio_analysis
+    source: https://github.com/librosa/librosa
+    version: "1.0.0"
+    license_code: ISC
+    status: operational
+    status_reason: "Probado: tempo y onsets (audio decodificado con FFmpeg). Un mapa por pista, contrastado con la música real."
+    capabilities: [beats, onsets]
+    used_by_modules: [reference_research]
+
+  - id: silero_vad
+    kind: vad
+    source: https://github.com/snakers4/silero-vad
+    version: "6.2.3"
+    license_code: MIT
+    status: operational
+    status_reason: >-
+      Probado vía onnxruntime sin torch: el wheel trae los ONNX; `pip install silero-vad --no-deps`.
+      Complementa a Whisper para bordes y mezcla; no sustituye alineación de palabras.
+    capabilities: [vad]
+    used_by_modules: [reference_research, quality, clip_master_adapter]
+
+  - id: python_audio_separator
+    kind: stem_separation
+    source: https://github.com/nomadkaraoke/python-audio-separator
+    version: "0.47.0"
+    license_code: MIT
+    status: optional
+    status_reason: >-
+      Solo para fragmentos narrados problemáticos; los modelos se descargan bajo demanda (licencias por
+      modelo). No instalado: conservarlo solo si mejora un caso real.
+    capabilities: [stem_separation]
+    used_by_modules: [reference_research]
+
+  - id: yt_dlp
+    kind: research
+    source: https://github.com/yt-dlp/yt-dlp
+    version: "2026.8.19"
+    license_code: Unlicense
+    status: needs_access
+    status_reason: "Requiere acceso de red a youtube.com (bloqueado en el entorno de desarrollo; disponible en el Mac)."
+    capabilities: [metadata, subtitles, media_download]
+    used_by_modules: [reference_research]
+
+  - id: youtube_data_api_v3
+    kind: research
+    source: https://developers.google.com/youtube/v3/docs
+    license_code: "Términos de Google APIs"
+    status: needs_access
+    status_reason: "Requiere YOUTUBE_API_KEY."
+    capabilities: [channel_metadata, public_stats]
+    used_by_modules: [reference_research]
+
+  - id: faster_whisper
+    kind: asr
+    source: https://github.com/SYSTRAN/faster-whisper
+    version: "1.2.1"
+    license_code: MIT
+    status: alternative
+    status_reason: "Modelos desde HuggingFace. Alternativa más precisa al ASR base; WhisperX (BSD-2) para tiempos de palabra."
+    capabilities: [asr, alignment]
+    used_by_modules: [quality, reference_research]
+
+  - id: metricool
+    kind: publishing
+    source: https://help.metricool.com/
+    status: optional
+    status_reason: "Implementado y DESACTIVADO (publishing.enabled=false). Recomendado para automatizar: docs/metricool.md."
+    capabilities: [publishing]
+    used_by_modules: [publishing]

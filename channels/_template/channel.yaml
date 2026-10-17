@@ -1,0 +1,51 @@
+# Plantilla de perfil de canal. Copiar con `channel-factory channel init <id>`.
+# Cada canal es independiente: personaje, voz, calendario, referencias y destinos propios.
+id: __CHANNEL_ID__
+name: __CHANNEL_NAME__
+enabled: false
+niche: __NICHE__                  # p. ej. science, finance_education, economics_education
+language: en-US
+audience: null
+editorial_promise: null
+series_bible: channels/__CHANNEL_ID__/series_bible.md
+format_bible: channels/__CHANNEL_ID__/format_bible.md
+world_rules: null                 # reglas del universo, si el canal tiene ficción propia
+
+reference_channels: []            # [{url, channel_id, role, language}]
+
+voice:
+  provider: kokoro
+  selected_voice: null            # elección definitiva (voices select)
+  provisional_voice: null         # piloto mientras no hay elección definitiva
+  speed: 1.0
+  narration_mode: undecided       # external_narrator | protagonist
+  lexicon: null                   # YAML palabra -> respelling
+  audition_text: null             # si es null se usa el texto genérico de audición
+  audition_candidates: []         # vacío = candidatos por defecto
+  format_samples: {}              # {narrator_external: "...", protagonist_first_person: "..."}
+
+visual:
+  provider: auto
+  protagonist: null
+  protagonist_proposal_selected: null
+  characters_dir: channels/__CHANNEL_ID__/characters
+  brand_dir: channels/__CHANNEL_ID__/brand
+
+publishing:
+  mode: preview                   # preview | draft | autopilot (el global puede restringirlo)
+  timezone: America/New_York
+  metricool_brand_id: null        # id (blogId) de la marca del canal en Metricool
+  metricool_brand_label: null
+  youtube_destination_id: null    # id del canal de YouTube conectado a esa marca
+  tiktok_destination_id: null     # cuenta de TikTok conectada a esa marca
+  made_for_kids: false            # un personaje animado no implica contenido para niños
+  synthetic_content_disclosure: true
+  youtube_category: EDUCATION
+
+monthly:
+  long_videos: 12
+  shorts_per_long_max: 3
+  recurring_enabled: false
+
+banned_topics: []
+published_topics_file: channels/__CHANNEL_ID__/published_topics.yaml

@@ -1,0 +1,123 @@
+{
+  "additionalProperties": false,
+  "description": "Contrato v1.0 hacia Clip Master (ver docs/clip_master_contract.md).",
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "job_id": {
+      "title": "Job Id",
+      "type": "string"
+    },
+    "channel_id": {
+      "title": "Channel Id",
+      "type": "string"
+    },
+    "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+    },
+    "source_video": {
+      "title": "Source Video",
+      "type": "string"
+    },
+    "source_checksum": {
+      "title": "Source Checksum",
+      "type": "string"
+    },
+    "source_type": {
+      "const": "original_explainer",
+      "default": "original_explainer",
+      "title": "Source Type",
+      "type": "string"
+    },
+    "language": {
+      "default": "en-US",
+      "title": "Language",
+      "type": "string"
+    },
+    "transcript_path": {
+      "title": "Transcript Path",
+      "type": "string"
+    },
+    "scene_manifest_path": {
+      "title": "Scene Manifest Path",
+      "type": "string"
+    },
+    "preferred_duration_seconds": {
+      "default": [
+        65,
+        120
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "title": "Preferred Duration Seconds",
+      "type": "array"
+    },
+    "max_duration_seconds": {
+      "default": 175,
+      "title": "Max Duration Seconds",
+      "type": "integer"
+    },
+    "max_clips": {
+      "default": 3,
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Max Clips",
+      "type": "integer"
+    },
+    "aspect_ratio": {
+      "const": "9:16",
+      "default": "9:16",
+      "title": "Aspect Ratio",
+      "type": "string"
+    },
+    "destination_profiles": {
+      "default": [
+        "youtube_shorts",
+        "tiktok"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Destination Profiles",
+      "type": "array"
+    },
+    "allow_publish": {
+      "const": false,
+      "default": false,
+      "title": "Allow Publish",
+      "type": "boolean"
+    },
+    "candidate_hints": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Candidate Hints",
+      "type": "array"
+    }
+  },
+  "required": [
+    "job_id",
+    "channel_id",
+    "episode_id",
+    "source_video",
+    "source_checksum",
+    "transcript_path",
+    "scene_manifest_path"
+  ],
+  "title": "ClipRequest",
+  "type": "object"
+}

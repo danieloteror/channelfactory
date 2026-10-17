@@ -1,0 +1,94 @@
+# Configuración global de Channel Factory.
+# Los valores por canal viven en channels/<id>/channel.yaml y NO deben tocarse desde aquí.
+# `auto` = descubrir un proveedor compatible; nunca inventa credenciales ni llama servicios pagados.
+
+project:
+  name: channel-factory
+  timezone: America/New_York        # coincide con la zona de las marcas en Metricool
+  conversation_language: es
+  state_dir: var                    # SQLite, caché y trabajos (fuera de Git)
+  models_dir: ~/.cache/channel_factory/models
+
+runtime:
+  heavy_jobs_concurrency: 1
+  render_workers: 2                 # escenas en paralelo dentro de un episodio (ajustar a CPU/RAM medidas)
+  resume_enabled: true
+  lease_seconds: 900
+  heartbeat_seconds: 30
+  max_attempts: 3
+  retry_backoff_seconds: [30, 120, 600]
+
+defaults:
+  output_language: en-US
+  long_video:
+    width: 1920
+    height: 1080
+    fps: 30
+    target_seconds: 480
+    range_seconds: [360, 600]
+    words_per_minute: [130, 165]    # punto de partida; manda la duración real del audio
+  clips:
+    width: 1080
+    height: 1920
+    preferred_seconds: [65, 120]
+    youtube_max_seconds: 175        # conservador; revalidar con plataforma y conector
+    max_per_episode: 3
+    allow_shorter_if_better: true
+    reuse_existing_assets: true
+  audio:
+    integrated_lufs: -14.0
+    true_peak_dbtp: -1.5
+    music_bed_db: -22.0
+    ducking: true
+  monthly:
+    long_videos: 12
+    shorts_per_long_max: 3
+    recurring_enabled: false
+
+providers:
+  voice_preference: kokoro
+  voice_backend: auto               # onnx (CPU) aquí; mlx en Apple Silicon cuando esté instalado
+  image_provider: auto              # proveedor registrado del canal; FLUX/ComfyUI/herramientas propias opcionales
+  animation_provider: optional
+  render_backend: ffmpeg            # compositor Python + FFmpeg; HyperFrames opcional tras prueba
+  llm_provider: session             # el guion lo escribe el agente en sesión; API opcional con presupuesto
+
+clip_master:
+  path: null                        # PENDIENTE: ruta o repo de Clip Master
+  transport: auto                   # cli | http | auto
+  profile: original_explainer
+  allow_publish: false              # Channel Factory es el único propietario de la publicación
+
+publishing:
+  enabled: false                    # Metricool implementado pero DESACTIVADO (recomendado para automatizar;
+                                    # ver docs/metricool.md para activarlo)
+  provider: metricool
+  transport: auto                   # mcp_handoff | http_api | auto
+  mode: preview                     # preview | draft | autopilot
+  youtube_long: true
+  youtube_shorts: true
+  tiktok_clips: true
+  tiktok_full_episode: false
+  require_verified_destination: true
+  media_storage: null               # PENDIENTE: almacenamiento con URL pública persistente
+
+budget:
+  currency: USD
+  paid_providers_enabled: false
+  episode_cap_usd: null
+  batch_cap_usd: null
+  monthly_cap_usd: null
+  max_paid_retries_per_asset: 1
+
+# Marcas de Metricool de otros flujos (p. ej. los de Clip Master): siempre rechazadas.
+protected_brand_ids: []
+
+# Canales registrados. Los canales propios se añaden con `channel-factory channel init <id>`
+# o en config/factory.local.yaml (ignorado por Git).
+channels:
+  science_en:
+    enabled: false
+    profile: channels/science_en/channel.yaml
+  finance_en:
+    enabled: false
+    profile: channels/finance_en/channel.yaml

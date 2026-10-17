@@ -1,0 +1,28 @@
+# Manifiesto de episodio (guion por escenas). Lo escribe el agente en sesión o un LLM con presupuesto.
+# Duraciones: las fija la narración real (no se suponen por número de palabras).
+channel_id: __CHANNEL_ID__
+episode_id: __EPISODE_ID__
+title: __TITLE__
+language: en-US
+script_version: 1
+claims_file: claims.json
+description: null
+tags: []
+music: null            # {path: assets/music.wav, license: "...", source: "...", gain_db: -22}
+thumbnail: null        # {scene_id: s01, title: "≤4 WORDS"} o {image: assets/thumb.png, title: ...}
+scenes:
+  - scene_id: s01
+    beat: hook         # hook|question|setup|mechanism|example|twist|nuance|resolution|cta|transition
+    clip_hint: question
+    transition_in: fade_black
+    claims: []
+    text: >-
+      Write the first line of narration here.
+    visual:
+      background: "#1F2937"          # o assets/<fondo>.png (idealmente 3840x2160 para zooms)
+      camera: {from: [0.5, 0.5, 1.0], to: [0.5, 0.5, 1.1], ease: in_out}
+      characters: []                 # [{id, image, x, y, height, enter: {at|at_text, anim}, swaps: [...], idle: bob}]
+      props: []
+      overlays: []                   # [{type: text|counter|bar_chart|line_chart, at|at_text, ...}]
+      vertical_roi: null             # [x, y, w, h] normalizados para el recorte 9:16
+      vertical_layout: null          # recomposición 9:16 si la ROI corta personaje o gráficos

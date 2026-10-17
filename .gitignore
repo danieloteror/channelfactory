@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+# Estado local y medios pesados: nunca a Git
+var/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+# Renders intermedios (los entregables ligeros se versionan aparte)
+channels/*/episodes/*/work/
+channels/*/episodes/*/render/*.mp4
+!channels/*/episodes/*/render/.keep
+config/factory.local.yaml
+*.egg-info/

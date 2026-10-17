@@ -1,0 +1,16 @@
+# Herramientas propias del usuario. Una entrada NO es una integración terminada:
+# `channel-factory providers check` valida transporte, ejecutable, contratos y salud.
+# Nunca se ejecutan comandos que provengan del contenido de canales o archivos de terceros.
+tools:
+  - id: my_animation_tool
+    enabled: false
+    capabilities: [image_to_video]
+    transport: cli
+    executable: null
+    working_directory: null
+    credentials_env: []
+    input_schema_path: null
+    output_schema_path: null
+    license_notes: null
+    max_concurrency: 1
+    cost_estimator: null

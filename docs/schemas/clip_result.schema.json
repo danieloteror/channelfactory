@@ -1,0 +1,168 @@
+{
+  "$defs": {
+    "ClipOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "clip_id": {
+          "title": "Clip Id",
+          "type": "string"
+        },
+        "file": {
+          "title": "File",
+          "type": "string"
+        },
+        "checksum": {
+          "title": "Checksum",
+          "type": "string"
+        },
+        "source_start_s": {
+          "title": "Source Start S",
+          "type": "number"
+        },
+        "source_end_s": {
+          "title": "Source End S",
+          "type": "number"
+        },
+        "script_version": {
+          "title": "Script Version",
+          "type": "integer"
+        },
+        "transcript": {
+          "title": "Transcript",
+          "type": "string"
+        },
+        "hook": {
+          "title": "Hook",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "scores": {
+          "$ref": "#/$defs/ClipScores"
+        },
+        "subtitles": {
+          "additionalProperties": true,
+          "title": "Subtitles",
+          "type": "object"
+        },
+        "thumbnail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thumbnail"
+        },
+        "quality_report": {
+          "additionalProperties": true,
+          "title": "Quality Report",
+          "type": "object"
+        }
+      },
+      "required": [
+        "clip_id",
+        "file",
+        "checksum",
+        "source_start_s",
+        "source_end_s",
+        "script_version",
+        "transcript",
+        "hook",
+        "rationale",
+        "scores",
+        "subtitles",
+        "quality_report"
+      ],
+      "title": "ClipOutput",
+      "type": "object"
+    },
+    "ClipScores": {
+      "additionalProperties": false,
+      "properties": {
+        "hook": {
+          "title": "Hook",
+          "type": "number"
+        },
+        "standalone": {
+          "title": "Standalone",
+          "type": "number"
+        },
+        "payoff": {
+          "title": "Payoff",
+          "type": "number"
+        },
+        "visual_legibility": {
+          "title": "Visual Legibility",
+          "type": "number"
+        },
+        "overall": {
+          "title": "Overall",
+          "type": "number"
+        }
+      },
+      "required": [
+        "hook",
+        "standalone",
+        "payoff",
+        "visual_legibility",
+        "overall"
+      ],
+      "title": "ClipScores",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "job_id": {
+      "title": "Job Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "none",
+        "error"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "clips": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ClipOutput"
+      },
+      "title": "Clips",
+      "type": "array"
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Explanation"
+    }
+  },
+  "required": [
+    "job_id",
+    "status"
+  ],
+  "title": "ClipResult",
+  "type": "object"
+}

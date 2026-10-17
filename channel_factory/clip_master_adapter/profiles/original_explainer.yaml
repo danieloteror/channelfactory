@@ -1,0 +1,36 @@
+# Perfil de selección para videos explicativos originales (se envía por solicitud;
+# NO se escribe en la configuración de Clip Master ni sustituye sus perfiles de GTA/fútbol).
+profile: original_explainer
+version: "1.0"
+not_applicable_criteria:
+  - gol, jugada, kill, persecución u otros picos de acción de gameplay/deporte
+  - picos de volumen o de movimiento como señal principal
+moment_types:            # unidades narrativas que valen como clip
+  - question             # plantea una pregunta concreta que el clip responde
+  - surprise             # corrige una intuición o revela un dato inesperado
+  - example              # ejemplo completo con su consecuencia
+  - resolution           # conclusión que se entiende sola
+rules:
+  standalone: true                    # se entiende sin ver el episodio
+  start_on_complete_sentence: true
+  forbidden_openers: [this, that, it, they, these, those, he, she, so, and, but, also, which]
+  end_after_resolution: true          # no arrastra la primera frase del siguiente tema
+  respect_sentence_boundaries: true
+  never_cut_words: true
+  max_trailing_silence_s: 0.6
+  max_leading_silence_s: 0.4
+  dedupe_overlap_ratio: 0.5           # >50 % de solapamiento = mismo clip
+  allow_fewer_clips_with_explanation: true
+  series_parts_only_if_natural: true  # partes 1/2/3 solo con serie narrativa real
+durations:
+  preferred_s: [65, 120]
+  allow_shorter_if_better: true
+  never_pad_to_reach_minimum: true
+vertical:
+  method_order:
+    - roi_reframe          # usar vertical_roi de cada escena
+    - recompose_same_assets  # si la ROI corta gráficos o personaje: vertical_layout con los mismos assets
+  keep_legible: [character, charts, on_screen_text]
+  new_opening_allowed: short_only     # si hace falta una apertura nueva, solo esa pieza
+publishing:
+  allow_publish: false                # Channel Factory es el único propietario de la publicación
